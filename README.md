@@ -1,2 +1,2 @@
-# advant-of-code-2023
-My work for advant of code 2023.
+# Advent of Code 2023 🎄
+
