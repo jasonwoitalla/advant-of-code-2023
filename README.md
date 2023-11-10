@@ -9,9 +9,9 @@ You can run any day solution from the root of this repo. Specify a day and optio
 
 | Day | Part 1 | Part 2 | Advent of Code link                            |
 | --- | ------ | ------ | ---------------------------------------------- |
-| 01  | :star: | :star: | [Day 01](https://adventofcode.com/2023/day/1)  |
-| 02  |        |        | [Day 02](https://adventofcode.com/2023/day/2)  |
-| 03  |        |        | [Day 03](https://adventofcode.com/2023/day/3)  |
+| 01  |   :star:    |   :star:    | [Day 01](https://adventofcode.com/2023/day/1)  |
+| 02  |   :star:    |   :star:    | [Day 02](https://adventofcode.com/2023/day/2)  |
+| 03  |   :star:    |   :star:    | [Day 03](https://adventofcode.com/2023/day/3)  |
 | 04  |        |        | [Day 04](https://adventofcode.com/2023/day/4)  |
 | 05  |        |        | [Day 05](https://adventofcode.com/2023/day/5)  |
 | 06  |        |        | [Day 06](https://adventofcode.com/2023/day/6)  |
