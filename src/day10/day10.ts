@@ -60,7 +60,7 @@ export async function part2() {
     let grid: string[][] = [];
     let graph = new Graph<string>((a, b) => a.localeCompare(b));
 
-    await parseLinesFromInput(__dirname + '/example.txt', line => {
+    await parseLinesFromInput(__dirname + '/input.txt', line => {
         grid.push(line.split(''));
     });
 
@@ -111,18 +111,17 @@ export async function part2() {
 
     // Find the tiles that are inside the cycle
     let visited: string[] = [];
-    let total = 0;
+    let count = 0;
 
-    for(let position of cycle) {
-        let x = parseInt(position.split(',')[0]);
-        let y = parseInt(position.split(',')[1]);
-
-        visited = floodFill(cycle, visited, x, y);
+    for(let y = 0; y < grid.length; y++) {
+        for(let x = 0; x < grid[0].length; x++) {
+            if(isInsideCycle(grid, cycle, x, y)) {
+                count += 1;
+            }
+        }
     }
 
-    total += visited.length - cycle.length;
-
-    return total;
+    return count;
 }
 
 function addNorthEdge(graph: Graph<string>, x: number, y: number) {
@@ -173,61 +172,32 @@ function dfs(graph: Graph<string>, start: string) {
     return path;
 }
 
-function isInsideCycle(cycle: string[], x: number, y: number) {
-    let inside = false;
-
-    for(let i = 0; i < cycle.length; i += 2) {
-        let x1 = parseInt(cycle[i].split(',')[0]);
-        let y1 = parseInt(cycle[i].split(',')[1]);
-        let x2 = parseInt(cycle[i + 1].split(',')[0]);
-        let y2 = parseInt(cycle[i + 1].split(',')[1]);
-
-        
-
-        if((y1 > y) !== (y2 > y) && x < (x2 - x1) * (y - y1) / (y2 - y1) + x1) {
-            inside = !inside;
-        }
+function isInsideCycle(grid: string[][], cycle: string[], x: number, y: number) {
+    if(x < 0 || y < 0 || y >= grid.length || x >= grid[0].length) {
+        return false;
     }
 
-    return inside;
-}
+    if(cycle.includes(`${x},${y}`)) return false;
 
-function floodFill(cycle: string[], visited: string[], x: number, y: number): string[] {
-    // First check that this hasn't been visited and is inside the cycle
-    if(visited.includes(`${x},${y}`) || !isInsideCycle(cycle, x, y)) return visited;
+    let crosses = 0;
+    let x2 = x;
+    let y2 = y;
 
-    visited.push(`${x},${y}`);
-    let queue = [`${x},${y}`];
-
-    while(queue.length > 0) {
-        let current = queue.shift()!;
-        let x = parseInt(current.split(',')[0]);
-        let y = parseInt(current.split(',')[1]);
-
-        if(!visited.includes(`${x},${y - 1}`) && isInsideCycle(cycle, x, y - 1)) {
-            visited.push(`${x},${y - 1}`);
-            queue.push(`${x},${y - 1}`);
+    while(x2 < grid[0].length && y2 < grid.length) {
+        let char = grid[y2][x2];
+        if(cycle.includes(`${x2},${y2}`) && char != 'L' && char != '7') {
+            crosses += 1;
         }
 
-        if(!visited.includes(`${x},${y + 1}`) && isInsideCycle(cycle, x, y + 1)) {
-            visited.push(`${x},${y + 1}`);
-            queue.push(`${x},${y + 1}`);
-        }
-
-        if(!visited.includes(`${x - 1},${y}`) && isInsideCycle(cycle, x - 1, y)) {
-            visited.push(`${x - 1},${y}`);
-            queue.push(`${x - 1},${y}`);
-        }
-
-        if(!visited.includes(`${x + 1},${y}`) && isInsideCycle(cycle, x + 1, y)) {
-            visited.push(`${x + 1},${y}`);
-            queue.push(`${x + 1},${y}`);
-        }
+        x2 += 1;
+        y2 += 1;
     }
 
-    console.log("Visited points: ");
-    console.log(visited.filter(nonCycle => !cycle.includes(nonCycle)));
-    return visited;
+    // if(crosses % 2 == 1) {
+    //     console.log(`[${x},${y}] is inside the cycle`);
+    // }
+
+    return crosses % 2 == 1;
 }
 
 /**
@@ -239,4 +209,7 @@ function floodFill(cycle: string[], visited: string[], x: number, y: number): st
  * 83 (incorrect)
  * 6927 (correct)
  * 
+ * Part 2:
+ * 1593 (too high)
+ * 467 (correct)
  */
