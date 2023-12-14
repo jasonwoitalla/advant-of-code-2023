@@ -1,7 +1,5 @@
 import { parseLinesFromInput } from '../util/parseInput';
 
-type Reflection = Record<number, number>;
-
 export async function part1() {
     let grids: Map<number, string[][]> = new Map();
 
@@ -24,14 +22,16 @@ export async function part1() {
         let perfectRows = iterativeFindReflecting(grids.get(key)!, grids.get(key)!.length - 1, true);
         if(perfectRows.length > 0) {
             // console.log(`Grid ${key} has a reflecting rows ${perfectRows}`);
-            sum += parseInt(perfectRows.split(',')[0]) * 100;
+            if(perfectRows[0].length > 0)
+                sum += parseInt(perfectRows[0].split(',')[0]) * 100;
         }
 
         // console.log(`Grid ${key}: checking cols`);
         let perfectCols = iterativeFindReflecting(grids.get(key)!, grids.get(key)![0].length - 1, false);
         if(perfectCols.length > 0) {
             // console.log(`Grid ${key} has a reflecting cols ${perfectCols}`);
-            sum += parseInt(perfectCols.split(',')[0]);
+            if(perfectCols[0].length > 0)
+                sum += parseInt(perfectCols[0].split(',')[0]);
         }
     }
 
@@ -43,6 +43,7 @@ function iterativeFindReflecting(grid: string[][], size: number, isRow: boolean)
     let end = size;
     let lastMatch = -1;
     let match = false;
+    let answers = [];
 
     // Move the end to meet the start
     while(start < end) {
@@ -81,9 +82,10 @@ function iterativeFindReflecting(grid: string[][], size: number, isRow: boolean)
     // console.log(`    Moving the end results`);
     // console.log(`    match=${match} [${end + 1},${start + 1}]`);
     if(match) {
-        return `${end+1},${start+1}`;
+        answers.push(`${end+1},${start+1}`);
     }
 
+    lastMatch = -1;
     start = 0;
     end = size;
 
@@ -126,10 +128,10 @@ function iterativeFindReflecting(grid: string[][], size: number, isRow: boolean)
     // console.log(`    match=${match} [${end + 1},${start + 1}]`);
     // console.log(`    match=${match} end=${end} start=${start}`);
     if(match) {
-        return `${end+1},${start+1}`;
+        answers.push(`${end+1},${start+1}`);
     }
 
-    return '';
+    return answers;
 }
 
 export async function part2() {
@@ -137,7 +139,7 @@ export async function part2() {
 
     let gridNum = 0;
     let grid: string[][] = [];
-    await parseLinesFromInput(__dirname + '/example.txt', line => {
+    await parseLinesFromInput(__dirname + '/input.txt', line => {
         if(line === '') {
             grids.set(gridNum, grid);
             grid = [];
@@ -159,7 +161,7 @@ export async function part2() {
 
         // Brute-force flip every character one character at a time and check if we have a new answer
         let gotNewAnswer = false;
-        console.log(`Grid ${key} should have ${myGrid.length*myGrid[0].length} iterations`);
+        // console.log(`Grid ${key} should have ${myGrid.length*myGrid[0].length} iterations`);
         let count = 1;
         for(let i = 0; i < myGrid.length; i++) {
             if(gotNewAnswer)
@@ -174,12 +176,12 @@ export async function part2() {
                 // console.log(`Grid ${key} itr=${count} Old answer=${ogAnswer} newAnswers=${newAnswers.join(' ')}`);
                 
                 for(let newAnswer of newAnswers) {
-                    if(i === 15 && j === 3) {
-                        console.log(`Grid ${key} itr=${count} Old answer=${ogAnswer} newAnswers=${newAnswers.join(' ')}`);
-                        // console.log(`At 0,0 new answer=${newAnswer}`);
-                        for(let row = 0; row < copy.length; row++) {
-                            console.log(JSON.stringify(copy[row]));
-                        }
+                    if(i === 9 && j === 4) {
+                        // console.log(`Grid ${key} itr=${count} Old answer=${ogAnswer} newAnswers=${newAnswers.join(' ')}`);
+                        // // console.log(`At 0,0 new answer=${newAnswer}`);
+                        // for(let row = 0; row < copy.length; row++) {
+                        //     console.log(JSON.stringify(copy[row]));
+                        // }
                     }
 
                     if(newAnswer.length > 0 && ogAnswer !== newAnswer) {
@@ -205,19 +207,23 @@ export async function part2() {
 }
 
 function getAnswer(grid: string[][]) {
-    let answer = [];
+    let answer: string[] = [];
     // console.log(`Grid ${key}: checking rows`);
     let perfectRows = iterativeFindReflecting(grid, grid.length - 1, true);
     if(perfectRows.length > 0) {
         // console.log(`Grid ${key} has a reflecting rows ${perfectRows}`);
-        answer.push('Row:' + perfectRows);
+        perfectRows.forEach((val) => {
+            answer.push('Row:' + val);
+        });
     }
 
     // console.log(`Grid ${key}: checking cols`);
     let perfectCols = iterativeFindReflecting(grid, grid[0].length - 1, false);
     if(perfectCols.length > 0) {
         // console.log(`Grid ${key} has a reflecting cols ${perfectCols}`);
-        answer.push('Col:' + perfectCols);
+        perfectCols.forEach((val) => {
+            answer.push('Col:' + val);
+        });
     }
 
     return answer;
@@ -231,4 +237,7 @@ function getAnswer(grid: string[][]) {
  * 45670 (too high)
  * 32005 (too low)
  * 40006 (correct)
+ * 
+ * Part 2:
+ * 28627
  */
