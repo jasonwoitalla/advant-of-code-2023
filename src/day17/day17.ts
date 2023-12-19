@@ -171,4 +171,6 @@ export async function part2() {
 /**
  * Attempted Answers:
  * 
+ * Part 1
+ * 759 (too high)
  */
