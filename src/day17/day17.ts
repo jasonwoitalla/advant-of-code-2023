@@ -1,10 +1,11 @@
 import { parseLinesFromInput } from '../util/parseInput';
-
+import TinyQueue from 'tinyqueue';
 import colors from 'colors';
 
 var height = 0;
 var width = 0;
 
+type state = {weight: number, pos: number, dir: [number, number], straight: number};
 const RIGHT: [number, number] = [1, 0];
 const LEFT: [number, number] = [-1, 0];
 const UP: [number, number] = [0, -1];
@@ -26,22 +27,31 @@ class Graph {
         this.edges[source].push([destination, weight]);
     }
 
-    shortestPath(source: number, dest: number = -1): [number, number[]] | undefined {
-        let priorityQueue: {weight: number, pos: number, dir: [number, number], straight: number}[] = [];
-        let dist = new Array<number>(this.vertices).fill(2147483647);
-        let prev = new Array<number>(this.vertices).fill(-1);
+    shortestPath(source: number, dest: number = -1) {
+        let priorityQueue = new TinyQueue<state>([], (a, b) => {
+            return a.weight - b.weight;
+        });
+        let dist: Map<state, number> = new Map<state, number>();
+        let prev: Map<state, number> = new Map<state, number>();
         let visited: boolean[] = new Array<boolean>(this.vertices).fill(false);
 
-        priorityQueue.push({weight: 0, pos: source, dir: DOWN, straight: 0});
-        priorityQueue.push({weight: 0, pos: source, dir: RIGHT, straight: 0});
-        dist[source] = 0;
+        let startState = {weight: 0, pos: source, dir: RIGHT, straight: 1};
+        dist.set(startState, 0);
+        priorityQueue.push(startState);
+
+        let otherStartState = {weight: 0, pos: source, dir: DOWN, straight: 1};
+        dist.set(otherStartState, 0);
+        priorityQueue.push(otherStartState);
 
         while(priorityQueue.length > 0) {
-            let current = priorityQueue[0];
-            priorityQueue.shift();
+            let current = priorityQueue.pop()!;
 
-            if(visited[current.pos]) continue; // Already visited this node
+            if(visited[current.pos]) { // Already visited this node
+                console.log(`Already visited ${current.pos}`);
+                continue; 
+            }
             visited[current.pos] = true;
+            // dist[current.pos] = current.weight;
 
             if(current.pos === dest) {
                 return [current.weight, prev];
@@ -55,37 +65,35 @@ class Graph {
 
                 let [nextX, nextY] = getCoordinates(next);
                 let dir: [number, number] = [nextX - curX, nextY - curY];
-                let distance = dist[current.pos] + weight;
+                let distance = dist.get(current)! + weight;
+
+                if(current.dir[0] === -dir[0] && current.dir[1] === -dir[1]) continue; // Don't go back the way we came
 
                 let isStraight = dir[0] === current.dir[0] && dir[1] === current.dir[1];
+                let [prevX, prevY] = getCoordinates(current.pos);
+                // console.log(`    Checking {weight: ${distance}, pos: [${nextX},${nextY}], dir: ${dir}, straight: ${isStraight ? current.straight + 1: 0}} is straight=${isStraight} previous position=[${prevX}, ${prevY}]`);
+                
+                let nextState: state = {weight: distance, pos: next, dir: dir, straight: isStraight ? current.straight + 1 : 1};
+                let currentDistanceToDest = dist.has(nextState) ? dist.get(nextState)! : Number.MAX_SAFE_INTEGER;
 
-                console.log(`    Checking {weight: ${distance}, pos: [${nextX},${nextY}], dir: ${dir}, straight: ${current.straight + 1}} is straight=${isStraight}`);
-
-                if(dist[next] > distance && isStraight && current.straight < 2) {
-                    dist[next] = distance;
-                    prev[next] = current.pos;
-                    priorityQueue.push({weight: distance, pos: next, dir: dir, straight: current.straight + 1});
-                } else if(dist[next] > distance && !isStraight) {
-                    dist[next] = distance;
-                    prev[next] = current.pos;
-                    priorityQueue.push({weight: distance, pos: next, dir: dir, straight: 0});
+                if(currentDistanceToDest > distance && isStraight && current.straight < 3) {
+                    // dist[next] = distance;
+                    dist.set(nextState, distance);
+                    prev.set(nextState, current.pos);
+                    priorityQueue.push(nextState);
+                } else if(currentDistanceToDest > distance && !isStraight) {
+                    dist.set(nextState, distance);
+                    prev.set(nextState, current.pos);
+                    priorityQueue.push(nextState);
                 }
-
-                priorityQueue.sort((a, b) => {
-                    return a.weight - b.weight;
-                });
             }
-        }
-
-        if(dest !== -1) {
-            return [dist[dest], prev];
         }
     }
 }
 
 export async function part1() {
     let grid: string[][] = [];
-    await parseLinesFromInput(__dirname + '/example.txt', line => {
+    await parseLinesFromInput(__dirname + '/input.txt', line => {
         if(height === 0) {
             width = line.length;
         }
@@ -119,13 +127,20 @@ export async function part1() {
 
     // Find shortest path
     let bottomRight = (height - 1) * width + (width - 1);
-    let [answer, path]: [number, number[]] = graph.shortestPath(0, bottomRight)!;
+    let [answer, path]: [any, any] = [0, {}];
+    let res = graph.shortestPath(0, bottomRight);
+    if(res !== undefined) {
+        [answer, path] = res;
+    } else {
+        return -1;
+    }
+    console.log(`Shortest path is ${answer}`);
 
     // Draw shortest path on grid
     let tempGrid: string[][] = grid.map((row) => row.map((e) => e));
 
     let prev = bottomRight;
-    while(prev != 0) {
+    while(prev > 0) {
         let [x, y] = getCoordinates(prev);
         tempGrid[y][x] = colors.bold.red('X');
         prev = path[prev];
@@ -137,38 +152,6 @@ export async function part1() {
     }
 
     return answer;
-}
-
-function getNumInDirection(path: number[], destPos: number) {
-    let pathCopy = path.map((e) => e);
-
-    let currentPos: number = pathCopy.pop()!;
-    let [currentX, currentY] = getCoordinates(currentPos);
-    let [destX, destY] = getCoordinates(destPos);
-
-    let deltaX = destX - currentX;
-    let deltaY = destY - currentY;
-
-    let numberInDirection = 0;
-    let prevPos = pathCopy.pop();
-
-    while(prevPos !== undefined) {
-        let [lastX, lastY] = getCoordinates(prevPos);
-
-        if(lastX === currentX - deltaX && lastY === currentY - deltaY) {
-            currentX = lastX;
-            currentY = lastY;
-            numberInDirection += 1;
-        } else {
-            // console.log(`   [${lastX}, ${lastY}] to [${currentX}, ${currentY}] has ${numberInDirection} points in its direction`);
-            break;
-        }
-
-        prevPos = pathCopy.pop();
-    }
-
-    // console.log(`Checking ${currentPos} to ${newPos} has a path of ${JSON.stringify(path)} with ${numberInDirection} in direction ${deltaX}, ${deltaY}`);
-    return numberInDirection;
 }
 
 function getCoordinates(num: number): [number, number] {
