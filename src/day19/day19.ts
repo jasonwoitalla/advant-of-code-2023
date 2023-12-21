@@ -3,6 +3,8 @@ import { parseLinesFromInput } from '../util/parseInput';
 const APPROVED = 'A';
 const REJECTED = 'R';
 
+type Range = [number, number];
+
 enum Operator {
     GT = '>',
     LT = '<'
@@ -22,8 +24,10 @@ type Condition = {
 }
 
 type Input = {
-    x: number; a: number; s: number; m:number;
+    x: number; m:number; a: number; s: number;
 }
+
+type InputRange = Record<keyof Input, Range>;
 
 export async function part1() {
     let parsingFunctions = true;
@@ -163,13 +167,30 @@ export async function part2() {
         console.log(key + ': ' + JSON.stringify(value));
     });
 
-    // Step 1: Simplify functions
-
-    // Step 2: Find the ranges of approved values for each function
-
-    // Step 3: Add up the ranges to find the total number of approved values
+    let input: InputRange = {x: [1, 4000], m: [1, 4000], a: [1, 4000], s: [1, 4000]}
 
     return 0;
+}
+
+function findAcceptedRanges(fcn: string, input: InputRange, functions: Map<string, Function>) {
+    let acceptedRanges: InputRange[] = [];
+    let part: InputRange = { ...input };
+
+    let myFunction = functions.get(fcn) ?? {name: '', conditions: [], returns: [], default: ''};
+    for(let i = 0; i < myFunction.conditions.length; i++) {
+
+    }
+
+    return acceptedRanges;
+}
+
+function evaluateRange(range: Range, op: Operator, compare: number): {accepted: Range | null; rejected: Range | null} {
+    switch(op) {
+        case Operator.GT: return {accepted: [compare + 1, range[1]], rejected: [range[0], compare]};
+        case Operator.LT: return {accepted: [range[0], compare - 1], rejected: [compare, range[1]]};
+    }
+
+    return {accepted: null, rejected: null};
 }
 
 /**
